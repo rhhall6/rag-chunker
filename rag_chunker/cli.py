@@ -9,7 +9,7 @@ import argparse
 import json
 import sys
 
-from .chunker import chunk_markdown, chunks_to_jsonl
+from .chunker import _records, chunk_markdown, chunks_to_jsonl, chunks_to_text
 
 
 def build_parser():
@@ -36,9 +36,16 @@ def build_parser():
         help="do not prepend the heading path to the chunk text",
     )
     parser.add_argument(
+        "--format",
+        choices=["jsonl", "array", "text"],
+        default="jsonl",
+        help="output format: jsonl (one object per line), array (one JSON array), "
+        "or text (chunk text joined by blank lines) (default: jsonl)",
+    )
+    parser.add_argument(
         "--array",
         action="store_true",
-        help="emit one indented JSON array instead of JSON lines",
+        help="emit one indented JSON array instead of JSON lines (same as --format array)",
     )
     parser.add_argument(
         "--stats",
@@ -61,15 +68,12 @@ def _read_input(path):
         return handle.read()
 
 
-def _render(chunks, as_array):
-    if not as_array:
-        return chunks_to_jsonl(chunks)
-    records = []
-    for index, chunk in enumerate(chunks):
-        record = {"index": index}
-        record.update(chunk.to_dict())
-        records.append(record)
-    return json.dumps(records, indent=2)
+def _render(chunks, fmt):
+    if fmt == "text":
+        return chunks_to_text(chunks)
+    if fmt == "array":
+        return json.dumps(_records(chunks), indent=2)
+    return chunks_to_jsonl(chunks)
 
 
 def _stats_line(chunks):
@@ -103,7 +107,8 @@ def main(argv=None):
     except ValueError as exc:
         parser.error(str(exc))
 
-    output = _render(chunks, args.array)
+    fmt = "array" if args.array else args.format
+    output = _render(chunks, fmt)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as handle:

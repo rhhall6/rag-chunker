@@ -19,7 +19,7 @@ from .markdown import parse_blocks
 from .sentences import split_sentences
 from .tokens import estimate_tokens
 
-__all__ = ["Chunk", "chunk_markdown", "chunks_to_jsonl"]
+__all__ = ["Chunk", "chunk_markdown", "chunks_to_jsonl", "chunks_to_text"]
 
 
 @dataclass(frozen=True)
@@ -223,6 +223,16 @@ def _tail_overlap(text, overlap_tokens):
     return " ".join(tail)
 
 
+def _records(chunks):
+    """Return each chunk as a dict with its ``index`` prepended."""
+    records = []
+    for index, chunk in enumerate(chunks):
+        record = {"index": index}
+        record.update(chunk.to_dict())
+        records.append(record)
+    return records
+
+
 def chunks_to_jsonl(chunks):
     """Serialise ``chunks`` as newline-delimited JSON, one object per line.
 
@@ -230,9 +240,16 @@ def chunks_to_jsonl(chunks):
     the list as ``index``, since a chunk on its own does not know where it
     sits among its siblings.
     """
-    lines = []
-    for index, chunk in enumerate(chunks):
-        record = {"index": index}
-        record.update(chunk.to_dict())
-        lines.append(json.dumps(record))
-    return "\n".join(lines)
+    return "\n".join(json.dumps(record) for record in _records(chunks))
+
+
+def chunks_to_text(chunks, separator="\n\n"):
+    """Return the rendered ``text`` of each chunk, joined by ``separator``.
+
+    This is the plain-text form of the same output the JSON formats carry,
+    for pipelines that want to drop chunks straight into an embedder or a
+    vector store without parsing JSONL. Each chunk keeps its heading path
+    prefix (unless ``heading_prefix`` was disabled) and is separated from
+    its neighbours by ``separator`` (two newlines by default).
+    """
+    return separator.join(chunk.text for chunk in chunks)

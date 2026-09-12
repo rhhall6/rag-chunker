@@ -104,5 +104,26 @@ def test_invalid_max_tokens_exits_with_error(tmp_path, capsys):
     assert "max_tokens must be a positive integer" in capsys.readouterr().err
 
 
+def test_format_text_emits_chunk_text_joined_by_blank_lines(tmp_path, capsys):
+    path = _write(tmp_path, "# Title\n\nHello world.\n\n## Sub\n\nBody line.\n")
+
+    cli.main([path, "--format", "text"])
+
+    out = capsys.readouterr().out
+    assert out == "Title\n\nHello world.\n\nTitle > Sub\n\nBody line.\n"
+
+
+def test_format_array_matches_array_flag(tmp_path, capsys):
+    path = _write(tmp_path, "# T\n\nBody.\n")
+
+    cli.main([path, "--format", "array"])
+    via_format = json.loads(capsys.readouterr().out)
+
+    cli.main([path, "--array"])
+    via_flag = json.loads(capsys.readouterr().out)
+
+    assert via_format == via_flag
+
+
 def test_stats_line_reports_zero_chunks_for_empty_input():
     assert cli._stats_line([]) == "0 chunks"

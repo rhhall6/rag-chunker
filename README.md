@@ -61,10 +61,12 @@ The one oversized chunk is the checks table: 68 tokens against a 60 token
 budget, emitted whole because splitting a table off its header row makes both
 halves useless.
 
-Feed the output to an embedder directly:
+Feed the output to an embedder directly -- JSONL on the left, plain text with
+`--format text` on the right (no `jq`, no JSON parsing):
 
 ```bash
 rag-chunker doc.md --max-tokens 512 --overlap 64 | jq -r .text | your-embedder
+rag-chunker doc.md --format text | your-embedder
 ```
 
 ### Options
@@ -74,7 +76,8 @@ rag-chunker doc.md --max-tokens 512 --overlap 64 | jq -r .text | your-embedder
 | `--max-tokens N` | `512` | Chunk size ceiling, heading prefix included |
 | `--overlap N` | `64` | Trailing tokens repeated in the next chunk of a section |
 | `--no-heading-prefix` | off | Do not prepend the heading path to the chunk text |
-| `--array` | off | Emit one indented JSON array instead of JSON lines |
+| `--format {jsonl,array,text}` | `jsonl` | Output format: JSON lines (default), one JSON array, or plain text |
+| `--array` | off | Emit one indented JSON array instead of JSON lines (same as `--format array`) |
 | `--stats` | off | Print a size summary to stderr |
 | `-o PATH` | stdout | Write the result to a file |
 
@@ -106,7 +109,8 @@ Other exports are useful on their own:
 | `parse_blocks(text)` | Markdown blocks: `heading`, `paragraph`, `list`, `code`, `table` |
 | `split_sentences(text)` | Sentence splitting with the abbreviation guard |
 | `estimate_tokens(text)` | The heuristic used for every `token_estimate` |
-| `chunks_to_jsonl(chunks)` | Serialise a chunk list |
+| `chunks_to_jsonl(chunks)` | Serialise a chunk list as JSONL |
+| `chunks_to_text(chunks, separator="\n\n")` | Plain text of each chunk's rendered `text`, joined by `separator` |
 
 ### What the parser recognises
 

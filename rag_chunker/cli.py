@@ -92,6 +92,8 @@ def main(argv=None):
         text = _read_input(args.path)
     except OSError as exc:
         parser.error(f"cannot read {args.path}: {exc}")
+    except UnicodeDecodeError as exc:
+        parser.error(f"cannot read {args.path}: not valid UTF-8 ({exc})")
 
     try:
         chunks = chunk_markdown(

@@ -94,6 +94,19 @@ def test_missing_file_exits_with_error(tmp_path, capsys):
     assert "cannot read" in capsys.readouterr().err
 
 
+def test_non_utf8_file_exits_with_a_clean_error(tmp_path, capsys):
+    path = tmp_path / "doc.md"
+    path.write_bytes(b"# Title\n\n\xff\xfe not valid utf-8\n")
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main([str(path)])
+
+    assert excinfo.value.code != 0
+    err = capsys.readouterr().err
+    assert "cannot read" in err
+    assert "not valid UTF-8" in err
+
+
 def test_invalid_max_tokens_exits_with_error(tmp_path, capsys):
     path = _write(tmp_path, "Body.\n")
 

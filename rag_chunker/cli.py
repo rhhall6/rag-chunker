@@ -108,9 +108,12 @@ def main(argv=None):
     output = _render(chunks, args.array)
 
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as handle:
-            handle.write(output)
-            handle.write("\n")
+        try:
+            with open(args.output, "w", encoding="utf-8") as handle:
+                handle.write(output)
+                handle.write("\n")
+        except OSError as exc:
+            parser.error(f"cannot write {args.output}: {exc}")
     else:
         print(output)
 

@@ -107,6 +107,17 @@ def test_non_utf8_file_exits_with_a_clean_error(tmp_path, capsys):
     assert "not valid UTF-8" in err
 
 
+def test_bad_output_path_exits_with_a_clean_error(tmp_path, capsys):
+    src = _write(tmp_path, "# T\n\nBody.\n")
+    dest = tmp_path / "no-such-dir" / "out.jsonl"
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main([src, "-o", str(dest)])
+
+    assert excinfo.value.code != 0
+    assert "cannot write" in capsys.readouterr().err
+
+
 def test_invalid_max_tokens_exits_with_error(tmp_path, capsys):
     path = _write(tmp_path, "Body.\n")
 
